@@ -11,7 +11,7 @@ import SwiftUI
 struct StageTimerApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            PrimaryTimerView()
         }
     }
 }

@@ -7,15 +7,16 @@
 		{
 			"tag": "v1",
 			"new_classes": [
-				"TimerDurableObject"
+				"BroadcastHub"
 			]
 		}
 	],
 	"durable_objects": {
 		"bindings": [
 			{
-				"class_name": "TimerDurableObject",
-				"name": "TIMER"
+				"class_name": "BroadcastHub",
+				"name": "BROADCAST_HUB",
+				"script_name": "stage-timer-worker"
 			}
 		]
 	},

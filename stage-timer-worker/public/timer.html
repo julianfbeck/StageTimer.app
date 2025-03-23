@@ -1,21 +1,9 @@
-import { TimerState, ClientRole } from './types';
-
-/**
- * Generates the HTML for the timer website
- * 
- * @param timerId The ID of the timer to display
- * @param initialState Optional initial timer state
- * @returns HTML string for the timer website
- */
-export function generateTimerWebsite(timerId: string, initialState?: TimerState): string {
-  const encodedTimerId = encodeURIComponent(timerId);
-  
-  return `<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stage Timer</title>
+  <title>Stage Timer Viewer</title>
   <style>
     :root {
       --primary-color: #2563eb;
@@ -275,7 +263,7 @@ export function generateTimerWebsite(timerId: string, initialState?: TimerState)
 
   <script>
     // Timer state
-    let timerState = ${initialState ? JSON.stringify(initialState) : `{
+    let timerState = {
       running: false,
       startTime: null,
       duration: 300000,
@@ -283,7 +271,7 @@ export function generateTimerWebsite(timerId: string, initialState?: TimerState)
       label: "Stage Timer",
       color: "#ffffff",
       lastUpdateTime: Date.now()
-    }`};
+    };
     
     // Connection state
     let reconnectAttempts = 0;
@@ -309,7 +297,7 @@ export function generateTimerWebsite(timerId: string, initialState?: TimerState)
       const totalSeconds = Math.ceil(milliseconds / 1000);
       const minutes = Math.floor(totalSeconds / 60);
       const seconds = totalSeconds % 60;
-      return \`\${minutes.toString().padStart(2, '0')}:\${seconds.toString().padStart(2, '0')}\`;
+      return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
     
     // Update the UI based on timer state
@@ -327,7 +315,7 @@ export function generateTimerWebsite(timerId: string, initialState?: TimerState)
       
       // Update progress bar
       const progressPercent = (timerState.remainingTime / timerState.duration) * 100;
-      progressBar.style.width = \`\${progressPercent}%\`;
+      progressBar.style.width = `${progressPercent}%`;
       
       // Add warning class if less than 30 seconds remaining
       if (timerState.remainingTime < 30000) {
@@ -339,14 +327,14 @@ export function generateTimerWebsite(timerId: string, initialState?: TimerState)
       }
       
       // Update page title
-      document.title = \`\${formatTime(timerState.remainingTime)} - Stage Timer\`;
+      document.title = `${formatTime(timerState.remainingTime)} - Stage Timer`;
     }
     
     // Connect to WebSocket
     function connect() {
-      const timerId = "${encodedTimerId}";
+      const timerId = new URLSearchParams(window.location.search).get('id') || 'default';
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = \`\${protocol}//\${window.location.host}/api/timer?id=\${timerId}&role=viewer\`;
+      const wsUrl = `${protocol}//${window.location.host}/api/timer?id=${timerId}&role=viewer`;
       
       // Close existing socket if any
       if (socket) {
@@ -453,7 +441,7 @@ export function generateTimerWebsite(timerId: string, initialState?: TimerState)
       reconnectAttempts++;
       const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
       
-      connectionStatus.textContent = \`Reconnecting in \${delay / 1000}s...\`;
+      connectionStatus.textContent = `Reconnecting in ${delay / 1000}s...`;
       
       reconnectInterval = setTimeout(() => {
         connect();
@@ -501,5 +489,4 @@ export function generateTimerWebsite(timerId: string, initialState?: TimerState)
     });
   </script>
 </body>
-</html>`;
-}
+</html>
