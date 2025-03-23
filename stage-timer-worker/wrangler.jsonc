@@ -1,0 +1,29 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "stage-timer-worker",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-03-21",
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_classes": [
+				"TimerDurableObject"
+			]
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"class_name": "TimerDurableObject",
+				"name": "TIMER"
+			}
+		]
+	},
+	"observability": {
+		"enabled": true
+	},
+	"assets": {
+		"directory": "./public/",
+		"binding": "ASSETS"
+	}
+}

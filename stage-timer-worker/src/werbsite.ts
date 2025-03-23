@@ -1,0 +1,446 @@
+import { TimerState } from "./types";
+
+/**
+ * Generates the HTML for the timer website
+ * 
+ * @param timerId The ID of the timer to display
+ * @param initialState Optional initial timer state
+ * @returns HTML string for the timer website
+ */
+export function generateTimerWebsite(timerId: string, initialState?: TimerState): string {
+	const encodedTimerId = encodeURIComponent(timerId);
+
+	return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stage Timer</title>
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --warning-color: #dc2626;
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-color: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary-color: #3b82f6;
+        --warning-color: #ef4444;
+        --bg-color: #0f172a;
+        --card-bg: #1e293b;
+        --text-color: #f1f5f9;
+        --text-secondary: #94a3b8;
+        --border-color: #334155;
+      }
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    
+    .container {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+      margin: 2rem;
+      border: 1px solid var(--border-color);
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+    
+    .timer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    
+    .timer-label {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0;
+      color: var(--text-color);
+    }
+    
+    .connection-status {
+      display: flex;
+      align-items: center;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .connected {
+      background-color: #10b981;
+    }
+    
+    .disconnected {
+      background-color: #ef4444;
+    }
+    
+    .timer-display {
+      font-family: 'SF Mono', SFMono-Regular, ui-monospace, monospace;
+      font-size: 5rem;
+      font-weight: 700;
+      margin: 2rem 0;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      color: var(--text-color);
+      transition: color 0.2s ease;
+    }
+    
+    .timer-warning {
+      color: var(--warning-color);
+      animation: pulse 1s infinite alternate;
+    }
+    
+    @keyframes pulse {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0.8;
+      }
+    }
+    
+    .timer-status {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+    
+    .timer-progress {
+      width: 100%;
+      height: 8px;
+      background-color: var(--border-color);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background-color: var(--primary-color);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    
+    .warning-progress {
+      background-color: var(--warning-color);
+    }
+    
+    .powered-by {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 2rem;
+    }
+    
+    .fullscreen-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 4px 8px;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background-color 0.2s ease;
+    }
+    
+    .fullscreen-btn:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .fullscreen-btn:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+    }
+    
+    /* Add media query for larger displays */
+    @media screen and (min-width: 768px) {
+      .timer-display {
+        font-size: 8rem;
+      }
+    }
+
+    /* For very large displays (like projectors) */
+    @media screen and (min-width: 1200px) and (min-height: 900px) {
+      .container {
+        max-width: 800px;
+      }
+      .timer-display {
+        font-size: 12rem;
+      }
+      .timer-label {
+        font-size: 2.5rem;
+      }
+      .timer-progress {
+        height: 12px;
+      }
+    }
+
+    /* Fullscreen mode */
+    .fullscreen-mode {
+      max-width: 100%;
+      width: 100%;
+      height: 100vh;
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .fullscreen-mode .timer-display {
+      font-size: 16rem;
+    }
+    
+    .fullscreen-mode .timer-label {
+      font-size: 3rem;
+    }
+
+    .control-link {
+      margin-top: 2rem;
+      font-size: 0.875rem;
+      text-decoration: none;
+      color: var(--primary-color);
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="container">
+    <div class="timer-header">
+      <h1 class="timer-label" id="timer-label">Stage Timer</h1>
+      <div class="connection-status">
+        <div class="status-indicator disconnected" id="status-indicator"></div>
+        <span id="connection-status">Connecting...</span>
+      </div>
+    </div>
+    
+    <div class="timer-display" id="timer-display">00:00</div>
+    
+    <div class="timer-status" id="timer-status">Timer stopped</div>
+    
+    <div class="timer-progress">
+      <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+    </div>
+    
+    <button id="fullscreen-btn" class="fullscreen-btn">Toggle Fullscreen</button>
+    
+    <a href="/control?id=${encodedTimerId}" class="control-link">Control this timer</a>
+    
+    <div class="powered-by">Powered by Cloudflare Workers</div>
+  </div>
+
+  <script>
+    // Timer state
+    let timerState = ${initialState ? JSON.stringify(initialState) : `{
+      running: false,
+      startTime: null,
+      duration: 300000,
+      remainingTime: 300000,
+      lastTick: null,
+      label: "Stage Timer"
+    }`};
+    let reconnectAttempts = 0;
+    let reconnectInterval = null;
+    let socket = null;
+    const MAX_RECONNECT_ATTEMPTS = 10;
+    
+    // DOM Elements
+    const timerDisplay = document.getElementById('timer-display');
+    const timerLabel = document.getElementById('timer-label');
+    const timerStatus = document.getElementById('timer-status');
+    const progressBar = document.getElementById('progress-bar');
+    const connectionStatus = document.getElementById('connection-status');
+    const statusIndicator = document.getElementById('status-indicator');
+    const container = document.getElementById('container');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    
+    // Format time as MM:SS
+    function formatTime(milliseconds) {
+      const totalSeconds = Math.ceil(milliseconds / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return \`\${minutes.toString().padStart(2, '0')}:\${seconds.toString().padStart(2, '0')}\`;
+    }
+    
+    // Update the UI based on timer state
+    function updateUI() {
+      // Update timer display
+      timerDisplay.textContent = formatTime(timerState.remainingTime);
+      
+      // Update label if available
+      if (timerState.label) {
+        timerLabel.textContent = timerState.label;
+      }
+      
+      // Update timer status
+      timerStatus.textContent = timerState.running ? 'Timer running' : 'Timer stopped';
+      
+      // Update progress bar
+      const progressPercent = (timerState.remainingTime / timerState.duration) * 100;
+      progressBar.style.width = \`\${progressPercent}%\`;
+      
+      // Add warning class if less than 30 seconds remaining
+      if (timerState.remainingTime < 30000) {
+        timerDisplay.classList.add('timer-warning');
+        progressBar.classList.add('warning-progress');
+      } else {
+        timerDisplay.classList.remove('timer-warning');
+        progressBar.classList.remove('warning-progress');
+      }
+      
+      // Update page title
+      document.title = \`\${formatTime(timerState.remainingTime)} - Stage Timer\`;
+    }
+    
+    // Connect to WebSocket
+    function connect() {
+      const timerId = "${encodedTimerId}";
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = \`\${protocol}//\${window.location.host}/api/timer?id=\${timerId}\`;
+      
+      // Close existing socket if any
+      if (socket) {
+        socket.close();
+      }
+      
+      // Update connection status
+      connectionStatus.textContent = 'Connecting...';
+      statusIndicator.classList.remove('connected');
+      statusIndicator.classList.add('disconnected');
+      
+      // Create new WebSocket connection
+      socket = new WebSocket(wsUrl);
+      
+      socket.addEventListener('open', () => {
+        console.log('WebSocket connection established');
+        connectionStatus.textContent = 'Connected';
+        statusIndicator.classList.remove('disconnected');
+        statusIndicator.classList.add('connected');
+        
+        // Reset reconnect attempts
+        reconnectAttempts = 0;
+        if (reconnectInterval) {
+          clearInterval(reconnectInterval);
+          reconnectInterval = null;
+        }
+      });
+      
+      socket.addEventListener('message', (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          
+          if (message.type === 'timerUpdate' && message.data) {
+            timerState = message.data;
+            updateUI();
+          }
+        } catch (error) {
+          console.error('Failed to parse message:', error);
+        }
+      });
+      
+      socket.addEventListener('close', () => {
+        console.log('WebSocket connection closed');
+        connectionStatus.textContent = 'Disconnected';
+        statusIndicator.classList.remove('connected');
+        statusIndicator.classList.add('disconnected');
+        
+        // Attempt to reconnect
+        attemptReconnect();
+      });
+      
+      socket.addEventListener('error', (error) => {
+        console.error('WebSocket error:', error);
+        connectionStatus.textContent = 'Connection error';
+        statusIndicator.classList.remove('connected');
+        statusIndicator.classList.add('disconnected');
+      });
+    }
+    
+    // Attempt to reconnect with exponential backoff
+    function attemptReconnect() {
+      if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        connectionStatus.textContent = 'Connection failed';
+        return;
+      }
+      
+      // Clear any existing reconnect interval
+      if (reconnectInterval) {
+        clearInterval(reconnectInterval);
+      }
+      
+      reconnectAttempts++;
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+      
+      connectionStatus.textContent = \`Reconnecting in \${delay / 1000}s...\`;
+      
+      reconnectInterval = setTimeout(() => {
+        connect();
+      }, delay);
+    }
+    
+    // Toggle fullscreen
+    fullscreenBtn.addEventListener('click', () => {
+      container.classList.toggle('fullscreen-mode');
+      
+      // Attempt to use browser fullscreen API if available
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(err => {
+          console.error('Error exiting fullscreen:', err);
+        });
+      } else {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.error('Error requesting fullscreen:', err);
+          // Fallback to just the CSS class
+        });
+      }
+    });
+    
+    // Initial UI update
+    updateUI();
+    
+    // Connect to WebSocket when page loads
+    window.addEventListener('load', () => {
+      connect();
+    });
+    
+    // Reconnect when page becomes visible again
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && 
+          (socket === null || socket.readyState === WebSocket.CLOSED)) {
+        connect();
+      }
+    });
+  </script>
+</body>
+</html>`;
+}
